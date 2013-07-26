@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<script type="text/javascript" src="messenger.js"></script>
+		<script type="text/javascript">
+		
+			var _m = msngr;
+			
+			var evnt = _m.newEvent("tableChanged").destroyWhen(function(){ return true; }).publish();
+			
+			var listnr = _m.listenTo("tableChanged").andDo(function(){alert("Hi I was fired");})
+									   				.exceptWhen(function(){ return true; });
+									   				
+			var anotherListnr = _m.listenTo("tableChanged").andDo(function(){alert("Hi I am another listnr");})
+									   				.exceptWhen(function(){ return true; });
+			
+			
+			evnt.fire();
+			
+		</script>
+	</head>
+	<body>
+		
+	</body>
+</html>

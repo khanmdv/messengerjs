@@ -1,0 +1,278 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<script type="text/javascript" src="messenger.js"></script>
+		<script type="text/javascript" src="assert.js"></script>
+		<script type="text/javascript">
+		
+		window.onload = function(){
+			
+			var updateCountEvent = msngr.newEvent("updateTestCount").publish();
+			var listner = msngr.listenTo("updateTestCount").andDo(function(){
+				var els = document.getElementsByClassName("grp"),
+				    len = els.length;
+				for( var i = 0; i < len; ++i ){
+					if ((/\s+\[\d+\]/).test(els[i].innerHTML)){
+						els[i].innerHTML = els[i].innerHTML.replace(/\d+/g, els[i].nextSibling.childNodes.length);
+					} else{
+						els[i].innerHTML += " [" + els[i].nextSibling.childNodes.length + "]";	
+					}
+				}
+			});
+			var totalListener = msngr.listenTo("updateTestCount").andDo(function(){
+				var els = document.getElementsByClassName("grp"),
+					results = document.getElementById("total"),
+				    len = els.length,
+				    sum =0,
+				    t = 0;
+				for( var i = 0; i < len; ++i ){
+					sum += parseInt(els[i].innerHTML.match(/\d+/)[0]);
+				}
+				
+				results.innerHTML = "[" + sum + "]";
+			});
+			
+			/**
+			 * Test Suite
+			 */
+			
+			testGroup("Basic Tests", function(){
+				
+				// Check if the library is loaded
+				assert(typeof msngr != "undefined", "Messenger Library loaded.");
+				assert(typeof msngr.newEvent != "undefined", "newEvent Method exists");
+				assert(typeof msngr.listenTo != "undefined", "listenTo method exists.");
+				assert(typeof msngr.noConflict != "undefined", "listenTo method exists.");
+				assert(typeof msngr.reset != "undefined", "listenTo method exists.");
+				assert(typeof msngr._version != "undefined", "_version is not null.");
+				
+				// Update test count
+				updateCountEvent.fire();
+			});
+			
+			testGroup("Create Event Tests", function(){
+				// Create an event
+				var evnt1 = msngr.newEvent("testEvent1");
+				
+				// Check if instance methods are available.
+				assert(evnt1, "Event is not null");
+				assert(typeof evnt1.publish != "undefined", "publish Method exists");
+				assert(typeof evnt1.fire != "undefined", "fire method exists.");
+				assert(typeof evnt1.destroyWhen != "undefined", "destroyWhen method esists.");
+				assert(typeof evnt1.pause != "undefined", "pause method esists.");
+				assert(typeof evnt1.resume != "undefined", "resume method esists.");
+				assert(typeof evnt1.isPaused != "undefined", "isPaused method esists.");
+				assert(typeof evnt1.isAlive != "undefined", "isAlive method esists.");
+				
+				// Check for evant Name
+				assert(evnt1.getName() == "testEvent1", "Event name is same as created event.");
+				
+				// Check alive, paused before publishing the event
+				assert(evnt1.isPaused(), "Event is paused as it is not published yet");
+				assert(!evnt1.isAlive(), "Event is not alive as it is not published yet");
+				
+				// Publish the event thereby making it live
+				evnt1.publish();
+				
+				// Check alive, paused after publishing the event
+				assert(!evnt1.isPaused(), "Event is not paused as it is published");
+				assert(evnt1.isAlive(), "Event is alive as it is published");
+				
+				// Destroy event. Free memory. Be a good citizen :)
+				evnt1.destroy();
+				
+				// Update test count
+				updateCountEvent.fire();
+			});
+			
+			testGroup("Create Listner Tests", function(){
+				// Create an event
+				var evnt1 = msngr.newEvent("testEvent2").publish();
+				
+				// Create a listener
+				var listnr1 = msngr.listenTo("testEvent2");
+				
+				// Check if listener is created successfully
+				assert(listnr1, "Listner is not null");
+				assert(typeof listnr1.andDo != "undefined", "andDo Method exists");
+				assert(typeof listnr1.exceptWhen != "undefined", "exceptWhen method exists.");
+				assert(typeof listnr1.pause != "undefined", "pause method esists.");
+				assert(typeof listnr1.resume != "undefined", "resume method esists.");
+				assert(typeof listnr1.isPaused != "undefined", "isPaused method esists.");
+				assert(typeof listnr1.isAlive != "undefined", "isAlive method esists.");
+				
+				// Check name of the listener
+				assert(listnr1.getName() == "testEvent2", "Event name is same.");
+				
+				// Check if listener is alive/paused
+				assert(!listnr1.isPaused(), "Listener is not paused");
+				assert(listnr1.isAlive(), "Listenr is alive");
+				
+				// Destroy the event
+				evnt1.destroy();
+				
+				// Update test count
+				updateCountEvent.fire();
+			});
+			
+			testGroup("Firing Events and Listening Tests", function(){
+				// Create an event
+				var evnt1 = msngr.newEvent("testEvent3").publish();
+				
+				// Create listener 1
+				var listnr1 = msngr.listenTo("testEvent3");
+				assert(listnr1.isAlive(), "Listener 1 is alive");
+				
+				// Create Listener 2
+				var listnr2 = msngr.listenTo("testEvent3");
+				assert(listnr2.isAlive(), "Listener 2 is alive");
+				
+				// Add do functions for listener 1
+				var callCount = 0;
+				listnr1.andDo(function(){
+					assert(true, "Listener 1: Inside first andDo");
+					assert(this == listnr1, "Listener 1 -> First andDo: this refers to listener 1");
+					callCount++;
+				}).andDo(function(){
+					assert(true, "Listener 1: Inside second andDo");
+					assert(this == listnr1, "Listener 1 -> Second andDo: this refers to listener 1");
+					callCount++;
+				});
+				
+				// Add do functions for Listener 2
+				var except = true, count2 = 0;
+				listnr2.andDo(function(){
+					assert(true, "Listener 2: Inside first andDo");
+					assert(this == listnr2, "Listener 2 -> First andDo: this refers to listener 2");
+					count2++;
+				}).exceptWhen(function(){
+					return except;
+				});
+				
+				// Fire multiple listeners. Both listener 1 and 2 will be called.
+				evnt1.fire();
+				
+				// Check if both the andDo of Listener were called
+				assert(callCount == 2, "Listener 1: All andDos were called.");
+				
+				// Check for exceptWhen
+				assert(count2 == 1, "Listener 2: andDo was fired before except was set to false.");
+				
+				// Set except to false
+				except = false;
+				
+				// Pause the listener 1
+				listnr1.pause();
+				
+				// Fire the event. Listener 1 should not get fired, listener 2 also will not be fired as exceptWhen will return false
+				evnt1.fire();
+				
+				// Check if both listners were not called
+				assert(callCount == 2, "Listener 1: andDo functions were not called as Listener 1 is paused.");
+				assert(count2 == 1, "Listener 2: andDo of listnr2 was not fired after except was set to false.");
+				
+				// Reset except. Listener 2 will now be called
+				except = true;
+				
+				// Resume the listener 1
+				listnr1.resume();
+				
+				// Fire the event. Both the listsners will be called
+				evnt1.fire();
+				
+				// Check if both listners were called
+				assert(callCount == 4, "Listener 1: andDo functions were called after resume.");
+				assert(count2 == 2, "Listsner 2: andDo was fired again with except with except set to true.");
+				
+				// Stop listener 2
+				listnr2.stopListening();
+				
+				// Fire the event. Listener 2 should not be called
+				evnt1.fire();
+				
+				// Check that only listener 1 is called
+				assert(callCount == 6, "Listsner 1: andDo functions were called.");
+				assert(count2 == 2, "Listener 2: andDo functions were not called");
+				
+				listnr1.stopListening();
+				
+				// FIre the event. Nothing should be called
+				evnt1.fire();
+				
+				// Check if Listener 1 is not alive anymore
+				assert(callCount == 6, "Listsner 1 is dead. andDo functions were not called.");
+				
+				// Destroy the event
+				evnt1.destroy();
+				
+				// Update the count
+				updateCountEvent.fire();
+			});
+			
+			testGroup("Destroyers and Notifier Tests", function(){
+				
+				// Create an event 
+				var evnt1 = msngr.newEvent("testEvent4").destroyWhen(function(){
+					assert(true, "Event is being destroyed.");
+					assert(this == evnt1, "Event object is passed as this.");
+					return true;
+				}).publish();
+				
+				// Create a listsner
+				var listnr1 = msngr.listenTo("testEvent4").notifyOnDeath(function(){
+					assert(true, "Event 1 is dying. Listsner 1 has been notified.");
+					assert(this == listnr1, "Listsner 1 was sent as this.");
+				}).andDo(function(){
+					assert(true, "Listsner 1 andDo was called.");
+				});
+				
+				// Create another listsner
+				var listnr2 = msngr.listenTo("testEvent4").notifyOnDeath(function(){
+					assert(true, "Event 1 is dying. Listener 2 has been notified.");
+					assert(this == listnr2, "Listsner 2 was sent as this.");
+				}).andDo(function(){
+					assert(true, "Listsner 2 andDo was called.");
+				});
+				
+				// Fire up the event
+				evnt1.fire();
+				
+				// destroy the event
+				evnt1.destroy();
+				
+				// update test count
+				updateCountEvent.fire();
+			});
+			
+			testGroup("Negative Test Cases", function(){
+				var evnt1 = msngr.newEvent("testEvent5");
+				var dupEvent = msngr.newEvent("testEvent5");
+				
+				assert(evnt1 == dupEvent, "newEvent function returns the same event if it has been already created without publishing.");
+				
+				evnt1 = msngr.newEvent("testEvent5").publish();
+				dupEvent = msngr.newEvent("testEvent5").publish();
+				
+				assert(evnt1 == dupEvent, "newEvent function returns the same event if it has been already created with publishing.");
+				
+				// update test count
+				updateCountEvent.fire();
+			});
+		}
+		</script>
+		
+		<style type="text/css">
+		BODY{
+			font-family : Helvetica,sans-serif,verdana;
+			font-size : 10pt;
+		}
+		li.pass {color : green; list-style-image: url(pass.png);margin : 3px; vertical-align:top;}
+		li.fail {color : red; list-style-image: url(fail.png); margin : 3px;vertical-align:top;}
+		li.grp  {font-weight : bold; margin : 10px 0px 3px 5px;list-style-image: url(tests.jpg); vertical-align:top;}
+		</style>
+	</head>
+	<body>
+		<H1 style="display:inline-block">Tests</H1>&nbsp;&nbsp;<H1 style="display:inline-block" id="total"></H1>
+		<ul id="results"></ul>
+	</body>
+</html>
