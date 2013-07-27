@@ -2,7 +2,7 @@ messengerjs
 ===========
 
 Messenger.js is a JavaScript library for publishing/subscribing to messages. This library helps in de-coupling
-many parts of your JavaScript in your web application. An example is worth a thousand liness...
+many parts of your JavaScript in your web application. An example is worth a thousand lines.
 
 ```
 // Module 1
