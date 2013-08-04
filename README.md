@@ -28,6 +28,7 @@ var anotherRowDeletedListener = msngr.listenTo("rowDeleted")
 								   	 
 // And blah blah blah.. you get it right...
 ```
+See the [API Documentation](http://captainxor.tumblr.com/post/57325644425/messenger-js-api-documentation).
 
 Using messenger.js
 ------------------
