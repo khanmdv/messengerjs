@@ -213,12 +213,12 @@
 				var _$notifiers = _notifiers[ this.getName() ] || new _empty();
 				var len = _$notifiers.size;
 				for ( var i = 0; i < len; ++i ){
-					_$notifiers[ i ].fun.call( _$notifiers[ i ].me, arguments );
+					_$notifiers[ i ].fun.apply( _$notifiers[ i ].me, arguments );
 				}
 				delete _notifiers[ this.getName() ];
 			}
 		},
-		fire : function(){
+		fire : function( ){
 			var _$listnrs = _listnrs[ this.getName() ];
 			if ( _$listnrs && _$listnrs.size > 0 ){
 				var _$len = _$listnrs.size;
@@ -233,7 +233,7 @@
 						for ( var j=0; j < _$doslen; ++j ){
 							var _$fun = _$dos[j];
 							var args = arguments;
-							_$fun.call( _$listner.me, arguments );
+							_$fun.apply( _$listner.me, arguments );
 						}
 					}	
 				}
